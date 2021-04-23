@@ -25,13 +25,17 @@ class River:
     def __str__(self):
         return str(self.body)
 
+    def plot(self):
+        plt.plot(list(range(len(self.body))), self.body)
+        plt.show()
+
     def iterate(self):
-        self.body[self.l_in] = self.C_in if self.iter < self.n else 0
+        self.body[self.l_in] = self.body[self.l_in] + self.C_in if self.iter < self.n else self.body[self.l_in]
         tmp = deepcopy(self.body)
         def _it(tmp):
             for i in range(2,len(self.body)-1):
                 tmp[i] =    self.body[i] + \
-                            self.body[i+1] * ( self.C_d * (1 - self.C_a) - (self.C_a/6) * ( self.C_a**2 - 3*self.C_a + 2 ) ) + \
+                            self.body[i+1] * ( self.C_d * (1 - self.C_a) - (self.C_a/6) * ( self.C_a**2 - 3*self.C_a + 2 ) ) - \
                             self.body[i] * ( self.C_d * (2 - 3*self.C_a) - (self.C_a/2) * ( self.C_a**2 - 2*self.C_a - 1 ) ) + \
                             self.body[i-1] * ( self.C_d * (1 - 3*self.C_a) - (self.C_a/2) * ( self.C_a**2 - self.C_a - 2 ) ) + \
                             self.body[i-2] * ( self.C_d * self.C_a + (self.C_a/6) * ( self.C_a**2 - 1 ) )
@@ -49,15 +53,15 @@ class River:
         self.body = tmp
 
 
-r = River(dt=0.1)
+r = River(dt=0.1, dx=5)
+print(r.C_a, r.C_d)
 for i in range(100000):
     r.iterate()
     if i%1000 == 0:
         print(r)
-        plt.plot(list(range(len(r.body))), r.body)
-        plt.show()
+        print(sum(r.body))
+        r.plot()
 
 print(r)
-
-plt.plot(list(range(len(r.body))), r.body)
-plt.show()
+print(sum(r.body))
+r.plot()
