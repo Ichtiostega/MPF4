@@ -2,6 +2,7 @@ import pickle as pckl
 import numpy as np 
 from copy import deepcopy
 from matplotlib import pyplot as plt 
+import time
 
 class River:
     def gen_mat(self):
@@ -28,7 +29,7 @@ class River:
         self.A = 1.5
         self.U = U
         self.D = D
-        self.m = 10000
+        self.m = 10
 
         self.dt = dt
         self.dx = dx
@@ -64,12 +65,11 @@ class River:
             return tmp
 
         if self.iter < self.n:
-            print(self.iter, self.n, self.C_in)
             self.body[self.l_in] += self.C_in
 
         tmp = _it()
 
-        while tmp[-1] > 0.00001:
+        while tmp[-3] > 0.00001:
             self.size += 100
             self.body = np.append(self.body, np.zeros(100, dtype=float))
             tmp = _it()
@@ -87,7 +87,6 @@ class River:
 
         tmp = _it()
 
-        print(tmp[-1], tmp[-2], tmp[-3])
         while tmp[-3] > 0.00001:
             self.size += 100
             self.gen_mat()
@@ -112,105 +111,140 @@ class River:
 
 # Zad 2
 
-ns = [1, 100000]
-out = [[n,{"Q": [], "CN": []}] for n in ns]
-print(out)
-for it in out:
-    print(it)
-    Q = River(dt=0.1, n=it[0])
-    CN = River(dt=0.1, n=it[0])
-    print(f'N: {it[0]}')
-    i = 0
-    fin = False
-    reached_lout = False
-    while not fin:
-        Q.iterate_quickest()
-        CN.iterate_CN()
-        it[1]["Q"].append(Q.body[Q.l_out])
-        it[1]["CN"].append(CN.body[CN.l_out])
-        if not reached_lout:
-            if it[1]["Q"][-1] > 0.0001 and it[1]["CN"][-1] > 0.0001:
-                print("LOUT")
-                reached_lout = True
-        else:
-            if it[1]["Q"][-1] < 0.0001 and it[1]["CN"][-1] < 0.0001:
-                fin = True
-        i += 1
-        if i%1000 == 0:
-            print(it[1]["Q"][-1], it[1]["CN"][-1])
-
-with open("data.pckl", "wb") as f:
-    pckl.dump(out, f)
-
-# out = []
+# tmp = []
 # with open("data.pckl", "rb") as f:
-#     out = pckl.load(f)
+#     tmp = pckl.load(f)
 
+# tmp.pop()
+
+# ns = [100000]
+# out = [[n,{"Q": [], "CN": []}] for n in ns]
 # for it in out:
-#     Qout = it[1]["Q"]
-#     CNout = it[1]["CN"]
-#     n = it[0]
-#     print(n)
-#     plt.plot(range(len(Qout)), Qout)
-#     plt.show()
-#     plt.plot(range(len(CNout)), CNout)
-#     plt.show()
+#     Q = River(dt=0.1, n=it[0])
+#     CN = River(dt=0.1, n=it[0])
+#     print(f'N: {it[0]}')
+#     i = 0
+#     fin = False
+#     reached_lout = False
+#     while not fin:
+#         Q.iterate_quickest()
+#         CN.iterate_CN()
+#         it[1]["Q"].append(Q.body[Q.l_out])
+#         it[1]["CN"].append(CN.body[CN.l_out])
+#         if not reached_lout:
+#             if it[1]["Q"][-1] > 0.00001 and it[1]["CN"][-1] > 0.00001:
+#                 print("LOUT")
+#                 reached_lout = True
+#         else:
+#             if it[1]["Q"][-1] < 0.00001 and it[1]["CN"][-1] < 0.00001:
+#                 fin = True
+#         i += 1
+#         if i%1000 == 0:
+#             print(it[1]["Q"][-1], it[1]["CN"][-1])
+
+# tmp.extend(out)
+# out = tmp
+
+# with open("data.pckl", "wb") as f:
+#     pckl.dump(out, f)
+
+out = []
+with open("data.pckl", "rb") as f:
+    out = pckl.load(f)
+
+for it in out:
+    Qout = it[1]["Q"]
+    CNout = it[1]["CN"]
+    n = it[0]
+    print(n)
+    plt.plot(range(len(Qout)), Qout)
+    plt.title(f'Quickest n={n}')
+    plt.xlabel('Krok czasowy')
+    plt.ylabel('Masa zanieczyszczenia [kg]')
+    plt.savefig(f"Quick{n}.png")
+    plt.clf()
+    plt.plot(range(len(CNout)), CNout)
+    plt.xlabel('Krok czasowy')
+    plt.ylabel('Masa zanieczyszczenia [kg]')
+    plt.title(f'Crank-Nicholson n={n}')
+    plt.savefig(f"CN{n}.png")
+    plt.clf()
 
 # zad 3
 
-Us = [3, 2] # 2 - macierz jednostkowa
-U_out = [[U, []] for U in Us]
-for U in U_out:
-    try:
-        r = River(U=U[0])
-        r.iterate_CN()
-        U[1].append(deepcopy(r.body))
-        r.plot()
-        for i in range(5000):
-            r.iterate_CN()
-        U[1].append(deepcopy(r.body))
-        r.plot()
-    except Exception as e:
-        print(e)
-
-with open("data_U.pckl", "wb") as f:
-    pckl.dump(U_out, f)
-
-# U_out = []
-# with open("data_U.pckl", "rb") as f:
-#     U_out = pckl.load(f)
-
+# Us = [3, 2] # 2 - macierz jednostkowa
+# U_out = [[U, []] for U in Us]
 # for U in U_out:
-#     print(U[0])
-#     for data in U[1]:
-#         plt.plot(range(len(data)), data)
-#         plt.show()
+#     try:
+#         r = River(U=U[0])
+#         r.iterate_CN()
+#         U[1].append(deepcopy(r.body))
+#         for i in range(5000):
+#             r.iterate_CN()
+#         U[1].append(deepcopy(r.body))
+#     except Exception as e:
+#         print(e)
 
-Ds = [16, 0.05] # 16
+# with open("data_U.pckl", "wb") as f:
+#     pckl.dump(U_out, f)
 
-D_out = [[D, []] for D in Ds]
-for D in D_out:
-    try:
-        r = River(D=D[0])
-        r.iterate_CN()
-        D[1].append(deepcopy(r.body))
-        r.plot()
-        for i in range(50000):
-            r.iterate_CN()
-        D[1].append(deepcopy(r.body))
-        r.plot()
-    except Exception as e:
-        print(e)
+U_out = []
+with open("data_U.pckl", "rb") as f:
+    U_out = pckl.load(f)
 
-with open("data_D.pckl", "wb") as f:
-    pckl.dump(D_out, f)
+for U in U_out:
+    print(U[0])
+    for i, data in enumerate(U[1]):
+        plt.plot(range(len(data)), data)
+        plt.title(f'U={U[0]}, iteracja {5000*i}')
+        plt.xlabel('Punkt na rzece [m]')
+        plt.ylabel('Masa zanieczyszczenia [kg]')
+        plt.savefig(f"U{U[0]}_first.png" if i==0 else f"U{U[0]}_last.png")
+        plt.clf()
 
-# D_out = []
-# with open("data_D.pckl", "rb") as f:
-#     D_out = pckl.load(f)
+# Ds = [16, 0.05] # 16
 
+# D_out = [[D, []] for D in Ds]
 # for D in D_out:
-#     print(D[0])
-#     for data in D[1]:
-#         plt.plot(range(len(data)), data)
-#         plt.show()
+#     try:
+#         r = River(D=D[0])
+#         r.iterate_CN()
+#         D[1].append(deepcopy(r.body))
+#         r.plot()
+#         for i in range(5000):
+#             r.iterate_CN()
+#         D[1].append(deepcopy(r.body))
+#         r.plot()
+#     except Exception as e:
+#         print(e)
+
+# with open("data_D.pckl", "wb") as f:
+#     pckl.dump(D_out, f)
+
+D_out = []
+with open("data_D.pckl", "rb") as f:
+    D_out = pckl.load(f)
+
+for D in D_out:
+    print(D[0])
+    for i, data in enumerate(D[1]):
+        plt.plot(range(len(data)), data)
+        plt.title(f'D={D[0]}, iteracja {5000*i}')
+        plt.xlabel('Punkt na rzece [m]')
+        plt.ylabel('Masa zanieczyszczenia [kg]')
+        plt.savefig(f"D{D[0]}_first.png" if i==0 else f"D{D[0]}_last.png")
+        plt.clf()
+
+t = time.time()
+r = River()
+for i in range(10000):
+    r.iterate_quickest()
+
+print(time.time()-t)
+t = time.time()
+
+r = River()
+for i in range(10000):
+    r.iterate_CN()
+
+print(time.time()-t)
